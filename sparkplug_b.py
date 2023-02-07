@@ -56,6 +56,29 @@ class MetricDataType:
     File = 18
     Template = 19
 
+python_datatype_mapping = {
+    0 : "NoneType",
+    1 : "int",
+    2 : "int",
+    3 : "int",
+    4 : "int",
+    5 : "int",
+    6 : "int",
+    7 : "int",
+    8 : "int",
+    9 : "float",
+    10 : "float",
+    11 : "bool",
+    12 : "str",
+    13 : "int",
+    14 : "str",
+    15 : "str",
+    16 : "DataSet",
+    17 : "bytes",
+    18 : "bytes",
+    19 : "Template",
+}
+
 class ParameterDataType:
     Unknown = 0
     Int8 = 1
@@ -356,3 +379,84 @@ def getBdSeqNum():
         bdSeq = 0
     return retVal
 ######################################################################
+
+######################################################################
+# Helper method to covert serialized DDATA payload into a dictionary
+######################################################################
+
+def ddataToDictionary(s_payload):
+    ddata_dict = {
+        "timestamp" : 0,
+        "metrics" : [],
+        "seq" : 0
+    }
+    deserialized_payload = sparkplug_b_pb2.Payload()
+    deserialized_payload.ParseFromString(s_payload)
+    # Populate the dictionary
+    ddata_dict["timestamp"] = deserialized_payload.timestamp
+    ddata_dict["seq"] = deserialized_payload.seq
+    for metric in deserialized_payload.metrics:
+        metric_format = {
+            "name" : "",
+            "timestamp" : 0,
+            "dataType" : "",
+            "value" : ""
+        }
+        metric_format["name"] = metric.name
+        metric_format["timestamp"] = metric.timestamp
+        metric_format["dataType"] = python_datatype_mapping[metric.datatype] 
+        # deciding the value type
+        if MetricDataType.Int8 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.Float == metric.datatype:
+            metric_format["value"] = metric.float_value
+        elif MetricDataType.Double == metric.datatype:
+            metric_format["value"] = metric.double_value
+        elif MetricDataType.String == metric.datatype:
+            metric_format["value"] = metric.string_value
+        elif MetricDataType.Boolean == metric.datatype:
+            if metric.boolean_value is True: metric_format["value"] = True
+            else: metric_format["value"] = False
+        elif MetricDataType.Int16 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.Int32 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.Int64 == metric.datatype:
+            metric_format["value"] = metric.long_value
+        elif MetricDataType.UInt8 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.UInt16 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.UInt32 == metric.datatype:
+            metric_format["value"] = metric.int_value
+        elif MetricDataType.UInt64 == metric.datatype:
+            metric_format["value"] = metric.long_value
+        elif MetricDataType.Text == metric.datatype:
+            metric_format["value"] = metric.string_value
+        elif MetricDataType.DateTime == metric.datatype:
+            metric_format["value"] = metric.long_value
+        elif MetricDataType.Bytes == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.File == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.DataSet == metric.datatype:
+            metric_format["value"] = metric.dataset_value
+        elif MetricDataType.Template == metric.datatype:
+            metric_format["value"] = metric.template_value
+        elif MetricDataType.UUID == metric.datatype:
+            metric_format["value"] = metric.string_value
+        else: metric_format["value"] = None
+
+        ddata_dict["metrics"].append(metric_format)
+    
+    return ddata_dict
+
+    # Thoughts
+
+    # To accomodate the massive messages that is received we have to think of a queueing system that can receive the data and add them to the queue
+    # instead of making the publisher to wait for response,
+    # Possibly look into async/await functions, or even multithreading, event emitters, or a queueing system
+
+    #Note : 
+    # Since we are fixing the type in proto files, make sure to add the reference in a config or a readme file
+    
