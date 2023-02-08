@@ -56,6 +56,20 @@ class MetricDataType:
     File = 18
     Template = 19
 
+    Int8Array = 22
+    Int16Array = 23
+    Int32Array = 24
+    Int64Array = 25
+    UInt8Array = 26
+    UInt16Array = 27
+    UInt32Array = 28
+    UInt64Array = 29
+    FloatArray = 30
+    DoubleArray = 31
+    BooleanArray = 32
+    StringArray = 33
+    DateTimeArray = 34 
+
 python_datatype_mapping = {
     0 : "NoneType",
     1 : "int",
@@ -77,6 +91,19 @@ python_datatype_mapping = {
     17 : "bytes",
     18 : "bytes",
     19 : "Template",
+    22: "bytearray",
+    23: "bytearray",
+    24: "bytearray",
+    25: "bytearray",
+    26: "bytearray",
+    27: "bytearray",
+    28: "bytearray",
+    29: "bytearray",
+    30: "bytearray",
+    31: "bytearray",
+    32: "bytearray",
+    33: "bytearray",
+    34: "bytearray",
 }
 
 class ParameterDataType:
@@ -277,6 +304,9 @@ def addMetric(container, name, alias, type, value, timestamp=int(round(time.time
     elif type == MetricDataType.Template:
         metric.datatype = MetricDataType.Template
         metric.template_value = value
+    elif type == MetricDataType.Int32Array:
+        metric.datatype = MetricDataType.Int32Array
+        metric.bytes_value = value
     else:
         print( "Invalid: " + str(type))
 
@@ -445,6 +475,32 @@ def ddataToDictionary(s_payload):
             metric_format["value"] = metric.template_value
         elif MetricDataType.UUID == metric.datatype:
             metric_format["value"] = metric.string_value
+        elif MetricDataType.Int8Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.Int16Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.Int8Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.Int8Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.UInt8Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.UInt16Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.UInt32Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.UInt64Array == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.FloatArray == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.DoubleArray == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.BooleanArray == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.StringArray == metric.datatype:
+            metric_format["value"] = metric.bytes_value
+        elif MetricDataType.DateTimeArray == metric.datatype:
+            metric_format["value"] = metric.bytes_value
         else: metric_format["value"] = None
 
         ddata_dict["metrics"].append(metric_format)
