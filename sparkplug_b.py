@@ -9,10 +9,12 @@
 # *
 # * Contributors:
 # *   Cirrus Link Solutions - initial implementation
+# *   Rahul K (https://github.com/rahulrauki) - support for arrays 
 # ********************************************************************************/
 import sparkplug_b_pb2
 import time
 from sparkplug_b_pb2 import Payload
+from array_packer import *
 
 seqNum = 0
 bdSeq = 0
@@ -91,19 +93,19 @@ python_datatype_mapping = {
     17 : "bytes",
     18 : "bytes",
     19 : "Template",
-    22: "bytearray",
-    23: "bytearray",
-    24: "bytearray",
-    25: "bytearray",
-    26: "bytearray",
-    27: "bytearray",
-    28: "bytearray",
-    29: "bytearray",
-    30: "bytearray",
-    31: "bytearray",
-    32: "bytearray",
-    33: "bytearray",
-    34: "bytearray",
+    22 : "tuple[int]",
+    23 : "tuple[int]",
+    24 : "tuple[int]",
+    25 : "tuple[int]",
+    26 : "tuple[int]",
+    27 : "tuple[int]",
+    28 : "tuple[int]",
+    29 : "tuple[int]",
+    30 : "tuple[float]",
+    31 : "tuple[float]",
+    32 : "list[bool]",
+    33 : "list[str]",
+    34 : "tuple[int]",
 }
 
 class ParameterDataType:
@@ -222,14 +224,6 @@ def initTemplateMetric(payload, name, alias, templateRef):
 
 ######################################################################
 # Helper method for adding metrics to a container which can be a
-# payload or a template with a timestamp
-######################################################################
-#def addMetric(container, name, alias, type, value):
-#    metric.timestamp = int(round(time.time() * 1000))
-#    return addMetric(container, name, alias, type, value, timestamp)
-
-######################################################################
-# Helper method for adding metrics to a container which can be a
 # payload or a template
 ######################################################################
 def addMetric(container, name, alias, type, value, timestamp=int(round(time.time() * 1000))):
@@ -304,9 +298,45 @@ def addMetric(container, name, alias, type, value, timestamp=int(round(time.time
     elif type == MetricDataType.Template:
         metric.datatype = MetricDataType.Template
         metric.template_value = value
+    elif type == MetricDataType.Int8Array:
+        metric.datatype = MetricDataType.Int8Array
+        metric.bytes_value = convert_to_packed_int8_array(value)
+    elif type == MetricDataType.Int16Array:
+        metric.datatype = MetricDataType.Int16Array
+        metric.bytes_value = convert_to_packed_int16_array(value)
     elif type == MetricDataType.Int32Array:
         metric.datatype = MetricDataType.Int32Array
-        metric.bytes_value = value
+        metric.bytes_value = convert_to_packed_int32_array(value)
+    elif type == MetricDataType.Int64Array:
+        metric.datatype = MetricDataType.Int64Array
+        metric.bytes_value = convert_to_packed_int64_array(value)
+    elif type == MetricDataType.UInt8Array:
+        metric.datatype = MetricDataType.UInt8Array
+        metric.bytes_value = convert_to_packed_uint8_array(value)
+    elif type == MetricDataType.UInt16Array:
+        metric.datatype = MetricDataType.UInt16Array
+        metric.bytes_value = convert_to_packed_uint16_array(value)
+    elif type == MetricDataType.UInt32Array:
+        metric.datatype = MetricDataType.UInt32Array
+        metric.bytes_value = convert_to_packed_uint32_array(value)
+    elif type == MetricDataType.UInt64Array:
+        metric.datatype = MetricDataType.UInt64Array
+        metric.bytes_value = convert_to_packed_uint64_array(value)
+    elif type == MetricDataType.FloatArray:
+        metric.datatype = MetricDataType.FloatArray
+        metric.bytes_value = convert_to_packed_float_array(value)
+    elif type == MetricDataType.DoubleArray:
+        metric.datatype = MetricDataType.DoubleArray
+        metric.bytes_value = convert_to_packed_double_array(value)
+    elif type == MetricDataType.BooleanArray:
+        metric.datatype = MetricDataType.BooleanArray
+        metric.bytes_value = convert_to_packed_boolean_array(value)
+    elif type == MetricDataType.StringArray:
+        metric.datatype = MetricDataType.StringArray
+        metric.bytes_value = convert_to_packed_string_array(value)
+    elif type == MetricDataType.DateTimeArray:
+        metric.datatype = MetricDataType.DateTimeArray
+        metric.bytes_value = convert_to_packed_datetime_array(value)
     else:
         print( "Invalid: " + str(type))
 
@@ -377,6 +407,32 @@ def addNullMetric(container, name, alias, type):
         metric.datatype = MetricDataType.File
     elif type == MetricDataType.Template:
         metric.datatype = MetricDataType.Template
+    elif type == MetricDataType.Int8Array:
+        metric.datatype = MetricDataType.Int8Array
+    elif type == MetricDataType.Int16Array:
+        metric.datatype = MetricDataType.Int16Array
+    elif type == MetricDataType.Int32Array:
+        metric.datatype = MetricDataType.Int32Array
+    elif type == MetricDataType.Int64Array:
+        metric.datatype = MetricDataType.Int64Array
+    elif type == MetricDataType.UInt8Array:
+        metric.datatype = MetricDataType.UInt8Array
+    elif type == MetricDataType.UInt16Array:
+        metric.datatype = MetricDataType.UInt16Array
+    elif type == MetricDataType.UInt32Array:
+        metric.datatype = MetricDataType.UInt32Array
+    elif type == MetricDataType.UInt64Array:
+        metric.datatype = MetricDataType.UInt64Array
+    elif type == MetricDataType.FloatArray:
+        metric.datatype = MetricDataType.FloatArray
+    elif type == MetricDataType.DoubleArray:
+        metric.datatype = MetricDataType.DoubleArray
+    elif type == MetricDataType.BooleanArray:
+        metric.datatype = MetricDataType.BooleanArray
+    elif type == MetricDataType.StringArray:
+        metric.datatype = MetricDataType.StringArray
+    elif type == MetricDataType.DateTimeArray:
+        metric.datatype = MetricDataType.DateTimeArray
     else:
         print( "Invalid: " + str(type))
 
@@ -476,43 +532,37 @@ def ddataToDictionary(s_payload):
         elif MetricDataType.UUID == metric.datatype:
             metric_format["value"] = metric.string_value
         elif MetricDataType.Int8Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_int8_array( metric.bytes_value )
         elif MetricDataType.Int16Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
-        elif MetricDataType.Int8Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
-        elif MetricDataType.Int8Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_int16_array( metric.bytes_value )
+        elif MetricDataType.Int32Array == metric.datatype:
+            metric_format["value"] = convert_from_packed_int32_array( metric.bytes_value )
+        elif MetricDataType.Int64Array == metric.datatype:
+            metric_format["value"] = convert_from_packed_int64_array( metric.bytes_value )
         elif MetricDataType.UInt8Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_uint8_array( metric.bytes_value )
         elif MetricDataType.UInt16Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_uint16_array( metric.bytes_value )
         elif MetricDataType.UInt32Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_uint32_array( metric.bytes_value )
         elif MetricDataType.UInt64Array == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_uint64_array( metric.bytes_value )
         elif MetricDataType.FloatArray == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_float_array( metric.bytes_value )
         elif MetricDataType.DoubleArray == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_double_array( metric.bytes_value )
         elif MetricDataType.BooleanArray == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_boolean_array( metric.bytes_value )
         elif MetricDataType.StringArray == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_string_array( metric.bytes_value )
         elif MetricDataType.DateTimeArray == metric.datatype:
-            metric_format["value"] = metric.bytes_value
+            metric_format["value"] = convert_from_packed_datetime_array( metric.bytes_value )
         else: metric_format["value"] = None
 
         ddata_dict["metrics"].append(metric_format)
     
     return ddata_dict
 
-    # Thoughts
-
-    # To accomodate the massive messages that is received we have to think of a queueing system that can receive the data and add them to the queue
-    # instead of making the publisher to wait for response,
-    # Possibly look into async/await functions, or even multithreading, event emitters, or a queueing system
-
-    #Note : 
+    # Note : 
     # Since we are fixing the type in proto files, make sure to add the reference in a config or a readme file
     
