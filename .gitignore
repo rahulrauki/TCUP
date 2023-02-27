@@ -1,1 +1,8 @@
 array_packer copy.py
+TCUP-API/venv/__pycache__
+TCUP-API/venv/Include
+TCUP-API/venv/Lib
+TCUP-API/venv/Scripts
+TCUP-API/venv/tcup-dashboard
+TCUP-API/venv/pyvenv.cfg
+
