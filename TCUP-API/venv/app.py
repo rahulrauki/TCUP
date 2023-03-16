@@ -158,6 +158,20 @@ def get_exportdata():
         list_to_xlsx(default_fail_list)
     return send_file('export_data.xlsx', as_attachment=True)
 
+@app.route('/api/clientstatus', methods=['GET'])
+def get_client_status():
+    result_data = {
+        "status" : 200,
+        "current_status" : ''
+    }
+    try:
+        with open('api-config.json', 'r') as config_file:
+            result_data['current_status'] = json.load(config_file)['client_status']
+    except:
+        result_data['current_status'] = 'Offline'
+        result_data['status'] = 500
+    return jsonify(result_data)
+
 
 #'''''''''''''''''''#
 #   HELPER METHODS  #
