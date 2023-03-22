@@ -24,6 +24,9 @@ model = config['open_api_credentials']['model']
 # Alias mapping helper
 alias_map = config['alias_mapping']
 
+
+class ResultData
+
 # Serve Angular build files
 angular_files_path = config['angular_build_files']['path']
 @app.route('/', defaults={'path': ''})
@@ -140,6 +143,21 @@ def add_process():
         update_alias_json(new_name)
     return jsonify(response_data)
 
+@app.route('/api/addrelation', methods=['POST'])
+def add_relation():
+    request_data = request.get_json()
+    condition_list = request_data.get("condition")
+    response_data = {
+        "status" : 200,
+        "data" : ''
+    }
+    function_result = add_condition_to_db(condition_list)
+    response_data['status'] = function_result['status']
+    response_data['data'] = function_result['message']
+    # Placeholder to add logic if need be
+    return jsonify(response_data)
+    
+
 
 @app.route('/api/export', methods=['GET'])
 def get_exportdata():
@@ -157,6 +175,20 @@ def get_exportdata():
     except:
         list_to_xlsx(default_fail_list)
     return send_file('export_data.xlsx', as_attachment=True)
+
+@app.route('/api/clientstatus', methods=['GET'])
+def get_client_status():
+    result_data = {
+        "status" : 200,
+        "current_status" : ''
+    }
+    try:
+        with open('api-config.json', 'r') as config_file:
+            result_data['current_status'] = json.load(config_file)['client_status']
+    except:
+        result_data['current_status'] = 'Offline'
+        result_data['status'] = 500
+    return jsonify(result_data)
 
 
 #'''''''''''''''''''#
@@ -226,6 +258,10 @@ def add_preprocess_data(x):
         return {"status" : 200, "message" : "Successfully added a new process"}
     except:
         return {"status" : 500 , "message" : "Please check the format correctly"}
+    
+# Adds the condtion to the DB
+def add_condition_to_db(condition):
+    pass # return dict[status, data]
 
 # Adds new alias to alias_mapping in api-config.json file
 def update_alias_json(new_variable):
